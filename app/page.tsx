@@ -1,7 +1,12 @@
-const page = () => {
+import React from 'react'
+import CreditSlotHeader from '../components/CreditSlotHeader';
+
+const HomePage = () => {
   return (
-    <div>page</div>
+    <>
+    <CreditSlotHeader/>
+    </>
   )
 }
 
-export default page
+export default HomePage
