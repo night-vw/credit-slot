@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // リダイレクト用
 import CreditSlotHeader from "../components/CreditSlotHeader";
 import { supabase } from "@/utils/supabaseClinet_Compoent";
+import LoadingComponent from "@/components/LoadingComponent";
 
 const HomePage: React.FC = () => {
   const [username, setUsername] = useState<string | null>(null); // ログインユーザー名
@@ -53,7 +54,13 @@ const HomePage: React.FC = () => {
   }, [router]);
 
   if (loading) {
-    return <div>読み込み中...</div>; // ローディング表示
+    // ローディング画面を表示
+    return <LoadingComponent />;
+  }
+
+  if (!username) {
+    // usernameが確定するまでの保険
+    return null;
   }
 
   return (

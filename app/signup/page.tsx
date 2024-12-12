@@ -66,8 +66,8 @@ const SignupPage: React.FC = () => {
       // セッションIDを生成
       const sessionId = crypto.randomBytes(32).toString("hex");
 
-    // 現在の日本時間を取得
-    const japanTime = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      // 現在の日本時間を取得
+      const japanTime = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
 
       // セッションを保存
       const { error: sessionError } = await supabase.from("credit_user_sessions").insert([
