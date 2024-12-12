@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import CreditSlotHeader from "../../components/CreditSlotHeaderLogout";
+import CreditSlotHeader from "@/components/CreditSlotHeaderLogout";
 import { supabase } from "@/utils/supabaseClinet_Compoent";
 import { useRouter } from "next/navigation";
 import crypto from "crypto";
