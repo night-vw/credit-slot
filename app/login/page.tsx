@@ -2,15 +2,16 @@
 import React, { useState } from "react";
 import CreditSlotHeader from "../../components/CreditSlotHeader";
 import { supabase } from "@/utils/supabaseClinet_Compoent";
-import crypto from "crypto";
 import { useRouter } from "next/navigation";
+import crypto from "crypto";
 
 const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const router = useRouter();
+  const [username, setUsername] = useState(""); // ユーザー名の入力値を管理する変数
+  const [password, setPassword] = useState(""); // パスワードの入力値を管理する変数
+  const [errorMessage, setErrorMessage] = useState(""); // エラーメッセージを管理する変数
+  const router = useRouter(); // リダイレクトに利用するrouter変数
 
+  // ログイン処理
   const handleLogin = async () => {
     if (!username || !password) {
       setErrorMessage("ユーザー名とパスワードを入力してください。");
@@ -18,28 +19,56 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      // パスワードをハッシュ化
-      const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
-
-      // Supabaseからユーザーを検索
-      const { data: user, error } = await supabase
+      // データベースからユーザーを検索
+      const { data: user, error: fetchError } = await supabase
         .from("slot_credit_user")
-        .select("*")
-        .eq("name", username)
-        .eq("password", hashedPassword);
+        .select("name, password")
+        .eq("name", username);
 
-      if (error || !user || user.length === 0) {
-        setErrorMessage("ユーザー名またはパスワードが間違っています。");
+      if (fetchError) {
+        setErrorMessage(`データベースエラー: ${fetchError.message}`);
         return;
       }
 
-      // ログイン成功時にトークンを保存
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("username", username);
+      if (!user || user.length === 0) {
+        setErrorMessage("ユーザー名またはパスワードが正しくありません。");
+        return;
+      }
 
-      // ホームページにリダイレクト
+      // 入力されたパスワードをハッシュ化して比較
+      const hashedPassword = crypto
+        .createHash("sha256")
+        .update(password)
+        .digest("hex");
+
+      if (user[0].password !== hashedPassword) {
+        setErrorMessage("ユーザー名またはパスワードが正しくありません。");
+        return;
+      }
+
+      // セッションIDを生成
+      const sessionId = crypto.randomBytes(32).toString("hex");
+
+      // 現在の日本時間を取得
+      const japanTime = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+
+      // セッションを保存
+      const { error: sessionError } = await supabase
+        .from("credit_user_sessions")
+        .insert([{ session_id: sessionId, username: username,created_at:japanTime }]);
+
+      if (sessionError) {
+        setErrorMessage(`セッション作成エラー: ${sessionError.message}`);
+        return;
+      }
+
+      // クッキーにセッションIDを保存
+      document.cookie = `session_id=${sessionId}; path=/; max-age=604800;`;
+
+      // ログイン成功後にリダイレクト
       router.push("/");
     } catch (error) {
+      console.error("予期しないエラー:", error);
       setErrorMessage("予期しないエラーが発生しました。");
     }
   };
@@ -49,18 +78,25 @@ const LoginPage: React.FC = () => {
       {/* ヘッダー */}
       <CreditSlotHeader />
 
-      {/* ログインページのメインコンテンツ */}
       <main className="p-4 flex justify-center items-center min-h-screen bg-gray-100">
         <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">ログイン</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
+            ログイン
+          </h2>
 
-          {/* エラーメッセージ表示 */}
-          {errorMessage && <div className="text-red-500 text-sm mb-4">{errorMessage}</div>}
+          {/* エラーメッセージ */}
+          {errorMessage && (
+            <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
+          )}
 
+          {/* 入力フォーム */}
           <form className="space-y-4">
-            {/* ユーザー名入力 */}
+            {/* ユーザ名入力 */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
                 ユーザー名
               </label>
               <input
@@ -75,7 +111,10 @@ const LoginPage: React.FC = () => {
 
             {/* パスワード入力 */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 パスワード
               </label>
               <input
@@ -97,6 +136,16 @@ const LoginPage: React.FC = () => {
               ログイン
             </button>
           </form>
+
+          {/* アカウント作成を促す文書とリンク */}
+          <div className="mt-4 text-center text-sm">
+            <p className="text-gray-600">アカウントをお持ちでない場合は</p>
+            <p>
+              <a href="/signup" className="text-teal-600 hover:underline">
+                アカウントを作成してください
+              </a>
+            </p>
+          </div>
         </div>
       </main>
     </>

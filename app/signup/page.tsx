@@ -1,40 +1,39 @@
-"use client"
-import React, { useState } from 'react';
-import CreditSlotHeader from '../../components/CreditSlotHeader';
+"use client";
+import React, { useState } from "react";
+import CreditSlotHeader from "../../components/CreditSlotHeader";
 import { supabase } from "@/utils/supabaseClinet_Compoent";
-import crypto from 'crypto';
-import { useRouter } from 'next/navigation'; // useRouterをインポート
+import { useRouter } from "next/navigation";
+import crypto from "crypto";
 
 const SignupPage: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const router = useRouter(); // useRouterを初期化
+  const [username, setUsername] = useState("");   //ユーザ名の入力値を管理する変数
+  const [password, setPassword] = useState("");   //パスワードの入力値を管理する変数
+  const [errorMessage, setErrorMessage] = useState("");   //エラーメッセージを管理する変数
+  const router = useRouter();   //リダイレクトに利用するrouter変数
 
-  // アカウント作成処理
+  //アカウント作成処理
   const handleSignUp = async () => {
-    // 入力検証
     if (!username || !password) {
-      setErrorMessage('ユーザー名とパスワードを入力してください。');
+      setErrorMessage("ユーザー名とパスワードを入力してください。");
       return;
     }
 
     if (username.length > 10) {
-      setErrorMessage('ユーザー名は10文字以内で入力してください。');
+      setErrorMessage("ユーザー名は10文字以内で入力してください。");
       return;
     }
 
     if (password.length < 8 || password.length > 16) {
-      setErrorMessage('パスワードは8文字以上16文字以内で入力してください。');
+      setErrorMessage("パスワードは8文字以上16文字以内で入力してください。");
       return;
     }
 
     try {
-      // ユーザー名の重複確認
+      // ユーザー名の重複チェック
       const { data: existingUser, error: fetchError } = await supabase
-        .from('slot_credit_user')
-        .select('name')
-        .eq('name', username);
+        .from("slot_credit_user")
+        .select("name")
+        .eq("name", username);
 
       if (fetchError) {
         setErrorMessage(`データベースエラー: ${fetchError.message}`);
@@ -42,26 +41,53 @@ const SignupPage: React.FC = () => {
       }
 
       if (existingUser && existingUser.length > 0) {
-        setErrorMessage('このユーザー名は既に使用されています。');
+        setErrorMessage("このユーザー名は既に使用されています。");
         return;
       }
 
-      // パスワードをSHA-256でハッシュ化
-      const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+      // パスワードのハッシュ化
+      const hashedPassword = crypto
+        .createHash("sha256")
+        .update(password)
+        .digest("hex");
 
-      // Supabaseにデータを挿入
-      const { error } = await supabase.from('slot_credit_user').insert([
-        { name: username, password: hashedPassword },
+      // ユーザー登録
+      const { error: insertError } = await supabase
+        .from("slot_credit_user")
+        .insert([{ name: username, password: hashedPassword }]);
+
+      if (insertError) {
+        setErrorMessage(
+          `アカウント作成中にエラーが発生しました: ${insertError.message}`
+        );
+        return;
+      }
+
+      // セッションIDを生成
+      const sessionId = crypto.randomBytes(32).toString("hex");
+
+    // 現在の日本時間を取得
+    const japanTime = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+
+      // セッションを保存
+      const { error: sessionError } = await supabase.from("credit_user_sessions").insert([
+        { session_id: sessionId, username: username,created_at:japanTime },
       ]);
 
-      if (error) {
-        setErrorMessage(`アカウント作成中にエラーが発生しました: ${error.message}`);
+      if (sessionError) {
+        setErrorMessage(`セッション作成エラー: ${sessionError.message}`);
         return;
       }
 
-      router.push('/'); // ルートページにリダイレクト
+      // クッキーにセッションIDを保存
+      //セッションの保持を最大1週間に設定する
+      document.cookie = `session_id=${sessionId}; path=/; max-age=604800;`;
+
+      // ログイン成功後にリダイレクト
+      router.push("/");
     } catch (error) {
-      setErrorMessage('予期しないエラーが発生しました。');
+      console.error("予期しないエラー:", error);
+      setErrorMessage("予期しないエラーが発生しました。");
     }
   };
 
@@ -70,19 +96,21 @@ const SignupPage: React.FC = () => {
       {/* ヘッダー */}
       <CreditSlotHeader />
 
-      {/* アカウント作成ページのメインコンテンツ */}
       <main className="p-4 flex justify-center items-center min-h-screen bg-gray-100">
-        {/* アカウント作成フォーム */}
         <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">アカウント作成</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
+            アカウント作成
+          </h2>
 
-          {/* エラーメッセージ表示 */}
+          {/* エラーメッセージ */}
           {errorMessage && (
             <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
           )}
 
+              {/* 入力フォーム */}
           <form className="space-y-4">
-            {/* ユーザ名を入力する項目 */}
+
+            {/* ユーザ名入力 */}
             <div>
               <label
                 htmlFor="username"
@@ -100,7 +128,7 @@ const SignupPage: React.FC = () => {
               />
             </div>
 
-            {/* パスワードを入力する項目 */}
+            {/* パスワード入力 */}
             <div>
               <label
                 htmlFor="password"
@@ -128,7 +156,7 @@ const SignupPage: React.FC = () => {
             </button>
           </form>
 
-          {/* ログインを促す文章とリンクを表示する */}
+          {/*ログインを促す文書とリンク */}
           <div className="mt-4 text-center text-sm">
             <p className="text-gray-600">
               既にアカウントを持っている場合は
