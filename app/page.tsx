@@ -1,66 +1,22 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // リダイレクト用
-import CreditSlotHeader from "../components/CreditSlotHeader";
-import { supabase } from "@/utils/supabaseClinet_Compoent";
+import React from "react";
+import { LoginCheck } from "@/hooks/LoginCheck";
+import CreditSlotHeader from "../components/CreditSlotHeaderLogin";
 import LoadingComponent from "@/components/LoadingComponent";
 
+
 const HomePage: React.FC = () => {
-  const [username, setUsername] = useState<string | null>(null); // ログインユーザー名
-  const [loading, setLoading] = useState(true); // ローディング状態
-  const router = useRouter(); // リダイレクト用
 
-  // クッキーからセッションIDを取得する関数
-  const getSessionIdFromCookies = (): string | null => {
-    const cookies = document.cookie.split("; ");
-    const sessionCookie = cookies.find((cookie) =>
-      cookie.startsWith("session_id=")
-    );
-    return sessionCookie ? sessionCookie.split("=")[1] : null;
-  };
+  const { username, loading } = LoginCheck();
 
-  useEffect(() => {
-    const fetchUsername = async () => {
-      const sessionId = getSessionIdFromCookies();
-
-      if (!sessionId) {
-        router.push("/login"); // セッションがない場合にリダイレクト
-        return;
-      }
-
-      try {
-        // データベースからユーザー名を取得
-        const { data, error } = await supabase
-          .from("credit_user_sessions")
-          .select("username")
-          .eq("session_id", sessionId)
-          .single();
-
-        if (error || !data) {
-          console.error("セッション情報の取得エラー:", error?.message);
-          router.push("/login"); // 無効なセッションの場合にリダイレクト
-        } else {
-          setUsername(data.username); // ユーザー名を状態に設定
-        }
-      } catch (err) {
-        console.error("予期しないエラー:", err);
-        router.push("/login"); // エラー発生時もリダイレクト
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsername();
-  }, [router]);
-
+  //ローディング中のとき
   if (loading) {
-    // ローディング画面を表示
-    return <LoadingComponent />;
+    return <LoadingComponent />; // ローディング画面表示
   }
 
+  //ユーザ名が確定していないとき
   if (!username) {
-    // usernameが確定するまでの保険
-    return null;
+    return null; // usernameが確定するまで保険
   }
 
   return (

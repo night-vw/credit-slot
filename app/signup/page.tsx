@@ -1,17 +1,18 @@
 "use client";
 import React, { useState } from "react";
-import CreditSlotHeader from "../../components/CreditSlotHeader";
+import CreditSlotHeader from "@/components/CreditSlotHeaderLogout";
 import { supabase } from "@/utils/supabaseClinet_Compoent";
 import { useRouter } from "next/navigation";
 import crypto from "crypto";
 
 const SignupPage: React.FC = () => {
-  const [username, setUsername] = useState("");   //ユーザ名の入力値を管理する変数
-  const [password, setPassword] = useState("");   //パスワードの入力値を管理する変数
-  const [errorMessage, setErrorMessage] = useState("");   //エラーメッセージを管理する変数
-  const router = useRouter();   //リダイレクトに利用するrouter変数
+  const [username, setUsername] = useState(""); // ユーザ名の入力値を管理する変数
+  const [password, setPassword] = useState(""); // パスワードの入力値を管理する変数
+  const [errorMessage, setErrorMessage] = useState(""); // エラーメッセージを管理する変数
+  const [isSigningUp, setIsSigningUp] = useState(false); // アカウント作成中かどうかを管理する変数
+  const router = useRouter(); // リダイレクトに利用するrouter変数
 
-  //アカウント作成処理
+  // アカウント作成処理
   const handleSignUp = async () => {
     if (!username || !password) {
       setErrorMessage("ユーザー名とパスワードを入力してください。");
@@ -28,6 +29,8 @@ const SignupPage: React.FC = () => {
       return;
     }
 
+    setIsSigningUp(true); // アカウント作成中に設定
+
     try {
       // ユーザー名の重複チェック
       const { data: existingUser, error: fetchError } = await supabase
@@ -37,11 +40,13 @@ const SignupPage: React.FC = () => {
 
       if (fetchError) {
         setErrorMessage(`データベースエラー: ${fetchError.message}`);
+        setIsSigningUp(false); // エラー時に解除
         return;
       }
 
       if (existingUser && existingUser.length > 0) {
         setErrorMessage("このユーザー名は既に使用されています。");
+        setIsSigningUp(false); // エラー時に解除
         return;
       }
 
@@ -60,6 +65,7 @@ const SignupPage: React.FC = () => {
         setErrorMessage(
           `アカウント作成中にエラーが発生しました: ${insertError.message}`
         );
+        setIsSigningUp(false); // エラー時に解除
         return;
       }
 
@@ -67,20 +73,22 @@ const SignupPage: React.FC = () => {
       const sessionId = crypto.randomBytes(32).toString("hex");
 
       // 現在の日本時間を取得
-      const japanTime = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const japanTime = new Date().toLocaleString("ja-JP", {
+        timeZone: "Asia/Tokyo",
+      });
 
       // セッションを保存
-      const { error: sessionError } = await supabase.from("credit_user_sessions").insert([
-        { session_id: sessionId, username: username,created_at:japanTime },
-      ]);
+      const { error: sessionError } = await supabase
+        .from("credit_user_sessions")
+        .insert([{ session_id: sessionId, username: username, created_at: japanTime }]);
 
       if (sessionError) {
         setErrorMessage(`セッション作成エラー: ${sessionError.message}`);
+        setIsSigningUp(false); // エラー時に解除
         return;
       }
 
       // クッキーにセッションIDを保存
-      //セッションの保持を最大1週間に設定する
       document.cookie = `session_id=${sessionId}; path=/; max-age=604800;`;
 
       // ログイン成功後にリダイレクト
@@ -88,6 +96,8 @@ const SignupPage: React.FC = () => {
     } catch (error) {
       console.error("予期しないエラー:", error);
       setErrorMessage("予期しないエラーが発生しました。");
+    } finally {
+      setIsSigningUp(false); // アカウント作成処理終了時に解除
     }
   };
 
@@ -107,9 +117,8 @@ const SignupPage: React.FC = () => {
             <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
           )}
 
-              {/* 入力フォーム */}
+          {/* 入力フォーム */}
           <form className="space-y-4">
-
             {/* ユーザ名入力 */}
             <div>
               <label
@@ -125,6 +134,7 @@ const SignupPage: React.FC = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg p-3 hover:border-indigo-300"
                 placeholder="ユーザー名を入力"
+                disabled={isSigningUp} // アカウント作成中は入力無効化
               />
             </div>
 
@@ -143,6 +153,7 @@ const SignupPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg p-3 hover:border-indigo-300"
                 placeholder="パスワードを入力"
+                disabled={isSigningUp} // アカウント作成中は入力無効化
               />
             </div>
 
@@ -150,17 +161,20 @@ const SignupPage: React.FC = () => {
             <button
               type="button"
               onClick={handleSignUp}
-              className="w-full py-3 px-4 bg-teal-600 text-white font-semibold rounded-md shadow-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className={`w-full py-3 px-4 ${
+                isSigningUp ? "bg-teal-700" : "bg-teal-600"
+              } text-white font-semibold rounded-md shadow-md ${
+                isSigningUp ? "" : "hover:bg-teal-700"
+              } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+              disabled={isSigningUp} // アカウント作成中はボタン無効化
             >
-              アカウント作成
+              {isSigningUp ? "アカウント作成中..." : "アカウント作成"} {/* ボタンの文字列を切り替え */}
             </button>
           </form>
 
-          {/*ログインを促す文書とリンク */}
+          {/* ログインを促す文書とリンク */}
           <div className="mt-4 text-center text-sm">
-            <p className="text-gray-600">
-              既にアカウントを持っている場合は
-            </p>
+            <p className="text-gray-600">既にアカウントを持っている場合は</p>
             <p>
               <a href="/login" className="text-teal-600 hover:underline">
                 ログインしてください

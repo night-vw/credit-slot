@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import CreditSlotHeader from "../../components/CreditSlotHeader";
+import CreditSlotHeader from "../../components/CreditSlotHeaderLogout";
 import { supabase } from "@/utils/supabaseClinet_Compoent";
 import { useRouter } from "next/navigation";
 import crypto from "crypto";
@@ -9,6 +9,7 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState(""); // ユーザー名の入力値を管理する変数
   const [password, setPassword] = useState(""); // パスワードの入力値を管理する変数
   const [errorMessage, setErrorMessage] = useState(""); // エラーメッセージを管理する変数
+  const [isLoggingIn, setIsLoggingIn] = useState(false); // ログイン処理中かどうかを管理する変数
   const router = useRouter(); // リダイレクトに利用するrouter変数
 
   // ログイン処理
@@ -17,6 +18,8 @@ const LoginPage: React.FC = () => {
       setErrorMessage("ユーザー名とパスワードを入力してください。");
       return;
     }
+
+    setIsLoggingIn(true); // ログイン処理中に設定
 
     try {
       // データベースからユーザーを検索
@@ -27,11 +30,13 @@ const LoginPage: React.FC = () => {
 
       if (fetchError) {
         setErrorMessage(`データベースエラー: ${fetchError.message}`);
+        setIsLoggingIn(false); // エラー時に解除
         return;
       }
 
       if (!user || user.length === 0) {
         setErrorMessage("ユーザー名またはパスワードが正しくありません。");
+        setIsLoggingIn(false); // エラー時に解除
         return;
       }
 
@@ -43,6 +48,7 @@ const LoginPage: React.FC = () => {
 
       if (user[0].password !== hashedPassword) {
         setErrorMessage("ユーザー名またはパスワードが正しくありません。");
+        setIsLoggingIn(false); // エラー時に解除
         return;
       }
 
@@ -50,15 +56,18 @@ const LoginPage: React.FC = () => {
       const sessionId = crypto.randomBytes(32).toString("hex");
 
       // 現在の日本時間を取得
-      const japanTime = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const japanTime = new Date().toLocaleString("ja-JP", {
+        timeZone: "Asia/Tokyo",
+      });
 
       // セッションを保存
       const { error: sessionError } = await supabase
         .from("credit_user_sessions")
-        .insert([{ session_id: sessionId, username: username,created_at:japanTime }]);
+        .insert([{ session_id: sessionId, username: username, created_at: japanTime }]);
 
       if (sessionError) {
         setErrorMessage(`セッション作成エラー: ${sessionError.message}`);
+        setIsLoggingIn(false); // エラー時に解除
         return;
       }
 
@@ -70,6 +79,8 @@ const LoginPage: React.FC = () => {
     } catch (error) {
       console.error("予期しないエラー:", error);
       setErrorMessage("予期しないエラーが発生しました。");
+    } finally {
+      setIsLoggingIn(false); // ログイン処理終了時に解除
     }
   };
 
@@ -106,6 +117,7 @@ const LoginPage: React.FC = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg p-3 hover:border-indigo-300"
                 placeholder="ユーザー名を入力"
+                disabled={isLoggingIn} // ログイン中は入力無効化
               />
             </div>
 
@@ -124,6 +136,7 @@ const LoginPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg p-3 hover:border-indigo-300"
                 placeholder="パスワードを入力"
+                disabled={isLoggingIn} // ログイン中は入力無効化
               />
             </div>
 
@@ -131,9 +144,14 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={handleLogin}
-              className="w-full py-3 px-4 bg-teal-600 text-white font-semibold rounded-md shadow-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className={`w-full py-3 px-4 ${
+                isLoggingIn ? "bg-teal-700" : "bg-teal-600"
+              } text-white font-semibold rounded-md shadow-md ${
+                isLoggingIn ? "" : "hover:bg-teal-700"
+              } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+              disabled={isLoggingIn} // ログイン中はボタン無効化
             >
-              ログイン
+              {isLoggingIn ? "ログイン中..." : "ログイン"} {/* ボタンの文字列を切り替え */}
             </button>
           </form>
 
