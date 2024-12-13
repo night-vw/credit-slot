@@ -148,7 +148,7 @@ const LoginPage: React.FC = () => {
                 isLoggingIn ? "bg-teal-700" : "bg-teal-600"
               } text-white font-semibold rounded-md shadow-md ${
                 isLoggingIn ? "" : "hover:bg-teal-700"
-              } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+              } focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2`}
               disabled={isLoggingIn} // ログイン中はボタン無効化
             >
               {isLoggingIn ? "ログイン中..." : "ログイン"} {/* ボタンの文字列を切り替え */}

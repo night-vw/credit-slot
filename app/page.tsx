@@ -7,10 +7,11 @@ import LoadingComponent from "@/components/LoadingComponent";
 import { supabase } from "@/utils/supabaseClinet_Compoent";
 
 const HomePage: React.FC = () => {
-  const { username, loading } = LoginCheck();
-  const [credit, setCredit] = useState<number | null>(null);
+  const { username, loading } = LoginCheck();   //ログイン確認  
+  const [credit, setCredit] = useState<number | null>(null);  //ユーザのクレジット数を管理する変数
   const [creditLoading, setCreditLoading] = useState<boolean>(true);
   const router = useRouter(); // リダイレクトに利用するrouter変数
+    const [shouldRenderLoading, setShouldRenderLoading] = useState(true); // 最低表示用のローディング状態
 
   useEffect(() => {
     if (username) {
@@ -40,9 +41,20 @@ const HomePage: React.FC = () => {
     }
   }, [username]);
 
+  //ローディング時の画面ちらつき防止処理
+  useEffect(() => {
+    if (!loading) {
+      // ローディングが完了してから0.3秒間表示を維持
+      const timeout = setTimeout(() => {
+        setShouldRenderLoading(false);
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
+
   // ローディング中のとき
-  if (loading || creditLoading) {
-    return <LoadingComponent />; // ローディング画面表示
+  if (loading || shouldRenderLoading || creditLoading) {
+    return <LoadingComponent />;
   }
 
   // ユーザ名が確定していないとき
@@ -53,15 +65,15 @@ const HomePage: React.FC = () => {
   return (
     <>
       <CreditSlotHeader />
-      <main className="overflow-hidden pt-40 md:pt-36 mt-4 ">
+      <main className="overflow-hidden pt-40 md:pt-36 mt-4">
         <div className="text-center">
           
           <h1 className="font-bold">
             <span className="text-blue-400 text-3xl sm:text-4xl md:text-5xl">
               {username}
-              <span className="text-black text-xl sm:text-3xl md:text-3xl"> さん</span>
+              <span className="text-black text-xl sm:text-3xl"> さん</span>
             </span>
-            <p className="mt-4 text-xl sm:text-3xl md:text-3xl">こんにちは！</p>
+            <p className="mt-4 text-xl sm:text-3xl">こんにちは！</p>
           </h1>
 
           {/* 所持クレジットの表示 */}
@@ -82,8 +94,8 @@ const HomePage: React.FC = () => {
               スロット機種と接続
             </button>
             <button
-              className="text-xl sm:text-2xl px-12 py-4 bg-rose-500 text-gray-100 rounded-lg shadow-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-700 whitespace-nowrap"
-              onClick={() => console.log("遊戯データボタンがクリックされました")}
+              className="text-xl sm:text-2xl px-12 py-4 bg-rose-500 text-gray-100 rounded-lg shadow-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-600 whitespace-nowrap"
+              onClick={() => router.push("/game-data")}
             >
               遊戯データを確認
             </button>

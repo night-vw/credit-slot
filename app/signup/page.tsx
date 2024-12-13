@@ -165,7 +165,7 @@ const SignupPage: React.FC = () => {
                 isSigningUp ? "bg-teal-700" : "bg-teal-600"
               } text-white font-semibold rounded-md shadow-md ${
                 isSigningUp ? "" : "hover:bg-teal-700"
-              } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+              } focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2`}
               disabled={isSigningUp} // アカウント作成中はボタン無効化
             >
               {isSigningUp ? "アカウント作成中..." : "アカウント作成"} {/* ボタンの文字列を切り替え */}

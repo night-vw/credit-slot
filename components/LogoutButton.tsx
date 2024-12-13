@@ -72,7 +72,7 @@ const LogoutButton = () => {
         onClick={handleLogout} // クリックイベントにログアウト処理をバインド
       />
       <span className="text-[10px] md:text-sm">
-        {isLoggingOut ? "ログアウト中..." : "ログアウト"}
+        ログアウト
       </span>
     </div>
   );
