@@ -1,5 +1,6 @@
 import React from 'react';
 import LogoutButton from './LogoutButton';
+import Link from 'next/link';
 
 const CreditSlotHeader: React.FC = () => {
   return (
@@ -7,7 +8,10 @@ const CreditSlotHeader: React.FC = () => {
       {/*ログアウトボタン */}
       <LogoutButton/>
       {/* タイトル */}
-      <h1 className="text-2xl md:text-4xl font-bold text-center flex-grow">収支・ざ・ろっく！</h1>
+      <Link href="/">
+      <h1 className="text-2xl md:text-4xl font-bold text-center flex-grow">
+        収支・ざ・ろっく！</h1>
+      </Link>
       {/* 右側に空のスペースを確保してセンタリングを保つ */}
       <div className="w-10"></div>
     </header>

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LoginCheck } from "@/hooks/LoginCheck";
 import CreditSlotHeader from "@/components/CreditSlotHeaderLogin";
 import LoadingComponent from "@/components/LoadingComponent";
@@ -9,6 +10,7 @@ const HomePage: React.FC = () => {
   const { username, loading } = LoginCheck();
   const [credit, setCredit] = useState<number | null>(null);
   const [creditLoading, setCreditLoading] = useState<boolean>(true);
+  const router = useRouter(); // リダイレクトに利用するrouter変数
 
   useEffect(() => {
     if (username) {
@@ -53,13 +55,15 @@ const HomePage: React.FC = () => {
       <CreditSlotHeader />
       <main className="overflow-hidden pt-40 md:pt-36 mt-4 ">
         <div className="text-center">
+          
           <h1 className="font-bold">
-            <span className="text-teal-600 text-3xl sm:text-4xl md:text-5xl">
+            <span className="text-blue-400 text-3xl sm:text-4xl md:text-5xl">
               {username}
               <span className="text-black text-xl sm:text-3xl md:text-3xl"> さん</span>
             </span>
             <p className="mt-4 text-xl sm:text-3xl md:text-3xl">こんにちは！</p>
           </h1>
+
           {/* 所持クレジットの表示 */}
           <div className="mt-8 flex justify-center">
             <p className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold">
@@ -68,22 +72,22 @@ const HomePage: React.FC = () => {
               <span>{credit?.toLocaleString()} 枚</span>
             </p>
           </div>
+
           {/* スロット機種と接続ボタンと遊戯データボタン */}
           <div className="mt-8 flex flex-col items-center space-y-4 font-bold">
             <button
-              className="text-xl sm:text-2xl px-10 py-4 bg-sky-600 text-gray-100 rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700 whitespace-nowrap"
-              onClick={() => console.log("スロット機種と接続ボタンがクリックされました")}
+              className="text-xl sm:text-2xl px-10 py-4 bg-teal-600 text-gray-100 rounded-lg shadow-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700 whitespace-nowrap"
+              onClick={() => router.push("/connect-slot")}
             >
               スロット機種と接続
             </button>
             <button
-              className="text-xl sm:text-2xl px-12 py-4 bg-emerald-500 text-gray-100 rounded-lg shadow-md hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600 whitespace-nowrap"
+              className="text-xl sm:text-2xl px-12 py-4 bg-rose-500 text-gray-100 rounded-lg shadow-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-700 whitespace-nowrap"
               onClick={() => console.log("遊戯データボタンがクリックされました")}
             >
               遊戯データを確認
             </button>
           </div>
-          
         </div>
       </main>
     </>
